@@ -1,0 +1,72 @@
+# The @argszero/cordis-plugin-request-extension-guard bundle patch: mount and go.
+#
+# The official DeepSeek adapter prepares every registered top-level request field
+# under ONE fan-out, in the registry that owns them
+# (`@deepseek-ai/dsh-deepseek-llm-api-extensions`):
+#
+#   const prepared = await Promise.all(entries.map(async ([field, provider]) => ({
+#     field, result: await provider.prepare(request),
+#   })))
+#
+# `Promise.all` rejects on the first failure, so one provider that throws fails
+# EVERY other field, and the adapter wraps the result as a terminal turn error:
+#
+#   throw new LlmError('DeepSeek request extension preparation failed',
+#                      'REQUEST_EXTENSION', { cause: error })
+#
+# The cause rides along as `cause` and no surface renders it — the terminal, the
+# session record and the Web UI all show the wrapper sentence — so the operator
+# reads "preparation failed" with no field, no path and no package named. The
+# route is then unusable for every message, while a pi-ai-backed route in the same
+# profile keeps working, because only the official adapter consumes this registry.
+#
+# Eight reports of the same shape, from eight different causes. The newest one is
+# the first-run path: since 0.1.7 `initProfile()` writes a profile manifest that
+# declares a `name` and no `version`, the package-inventory collector walks every
+# module entry up to its nearest manifest and rejects that one, so a brand-new
+# profile with a single relative-path plugin breaks the official route on first
+# use (#7678).
+#
+# This plugin guards each registered provider's `prepare` — the object the
+# registry stores, not the registry's own method, which is left untouched. The
+# failing field is skipped for that request, named in the host log with the
+# producer's message VERBATIM and a self-rescue path, and every other field is
+# delivered normally. Providers registered after this plugin mounts are covered
+# too, through the registry's own map. Opt-in, an absent `version` is added to the
+# manifest that caused the walk to fail and the field is retried inside the same
+# request, so the field comes back rather than merely surviving.
+#
+# What it does not claim is in the README: skip means the field really is absent
+# from that request, cancellation is never turned into a skip, and the durable fix
+# belongs in the harness (per-entry tolerance in the collector, and a version in
+# the manifest `initProfile()` generates).
+#
+# Optional config:
+#
+#   - set:
+#       - id: request-extension-guard
+#         config:
+#           # Name the throwing field and change nothing about the request.
+#           # For an operator who wants to see the condition before a plugin
+#           # acts on it.
+#           mode: report                      # or: isolate (default)
+#           # Fields that must keep failing the request closed, even under
+#           # `isolate`. Empty by default: a request missing one field is
+#           # strictly more useful than no request at all.
+#           strictFields: [dsh_plugin_packages]
+#           # Add an absent `version` to the profile manifest that caused a
+#           # recognized failure, then retry that field in the same request.
+#           # Additive only: an existing version is never overwritten.
+#           repairProfileManifest: true       # default: false
+#           log: false                        # default: true
+#
+# The default is `isolate`, repairing nothing, logging to the host log. Nothing
+# here is destructive: no stored Session content is rewritten, the registry's own
+# `prepare` and its joint acceptance transaction stay exactly as they were, and
+# the plugin never fails a request it did not have to fail.
+#
+# See the README for the boundaries this plugin states rather than hides.
+
+- insert:
+    - id: request-extension-guard
+      name: '@argszero/cordis-plugin-request-extension-guard'

@@ -1,0 +1,66 @@
+{
+  "name": "@argszero/cordis-plugin-request-extension-guard",
+  "description": "One DeepSeek request extension field failing must not kill the turn. The registry prepares every registered field under a single `Promise.all`, so one throwing provider — the package inventory collector hitting a profile manifest that declares a name but no version, a missing package, a dangling fallback link — fails preparation for the whole official request (`REQUEST_EXTENSION`), every turn, while the cause is swallowed (`LlmError` carries it as `cause`, which no surface renders). This plugin guards each registered provider's `prepare` (and every provider registered later, through the registry's own map): the failing field is skipped for that request, its exact cause is named in the host log with a self-rescue path, the surviving fields are delivered normally, and — opt-in — an absent `version` is added to the manifest that caused the walk to fail and the field is retried in the same request.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*.js",
+    "lib/types/**/*.d.ts",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/argszero/cordis-plugin-request-extension-guard.git"
+  },
+  "homepage": "https://github.com/argszero/cordis-plugin-request-extension-guard#readme",
+  "bugs": {
+    "url": "https://github.com/argszero/cordis-plugin-request-extension-guard/issues"
+  },
+  "keywords": [
+    "cordis",
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "request-extension",
+    "request-extension-guard",
+    "fail-closed",
+    "diagnostics"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-deepseek-llm-api-extensions": "0.1.7-rc.1",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.5.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "pretest": "tsc",
+    "test": "node --test \"test/*.spec.mjs\"",
+    "prepublishOnly": "tsc",
+    "test:inject": "node scripts/inject-defects.mjs"
+  },
+  "engines": {
+    "node": "^22.19 || >=24"
+  }
+}
