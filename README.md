@@ -82,6 +82,12 @@ that arrives later, with no polling.
 
 ## Mounting
 
+```sh
+dsh plugin --profile <profile> add github:argszero/cordis-plugin-request-extension-guard
+```
+
+The git spec installs the tree this README describes; `npm install` on its own never attaches a plugin to a profile — `dsh plugin add` is what writes the row that makes it load.
+
 ```yaml
 # cordis.patch.yml of the profile, or the bundle's own patch
 - insert:
